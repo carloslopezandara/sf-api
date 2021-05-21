@@ -1,0 +1,38 @@
+[package]
+name = "sf-api"
+version = "0.1.0"
+authors = ["Alex Rozgo <alex.rozgo@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+env_logger = "0.8"
+
+[dependencies.substrate-api-client]
+git = "https://github.com/SugarFunge/substrate-api-client.git"
+rev = "91cb055d8946c7bbabb39e63ec3a9dcb179a25c8"
+
+[dependencies.clap]
+version = "2.33"
+features = ["yaml"]
+
+[dependencies.sp-keyring]
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.2"
+package = "sp-keyring"
+
+[dependencies.sp-core]
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.2"
+package = "sp-core"
+
+[dependencies.sugarfunge-runtime]
+git = "https://github.com/SugarFunge/sugarfunge-node.git"
+rev = "197c32591e7f11f1d92b04412a36ef359c6eb786"
+version = "0.1.0"
+package = "sugarfunge-runtime"
+
+[features]
+default = ["std"]
+std = [
+	"sp-core/std",
+]
