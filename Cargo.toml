@@ -6,14 +6,16 @@ edition = "2018"
 
 [dependencies]
 env_logger = "0.8"
+structopt = "0.3"
+actix-web = "3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rand = "0.8.3"
+hex = "0.4.3"
 
 [dependencies.substrate-api-client]
 git = "https://github.com/SugarFunge/substrate-api-client.git"
 rev = "91cb055d8946c7bbabb39e63ec3a9dcb179a25c8"
-
-[dependencies.clap]
-version = "2.33"
-features = ["yaml"]
 
 [dependencies.sp-keyring]
 git = "https://github.com/paritytech/substrate"
@@ -32,7 +34,10 @@ version = "0.1.0"
 package = "sugarfunge-runtime"
 
 [features]
-default = ["std"]
+default = ["std", "full_crypto"]
 std = [
+	"sp-core/std",
+]
+full_crypto = [
 	"sp-core/std",
 ]

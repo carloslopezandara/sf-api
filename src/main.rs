@@ -1,38 +1,44 @@
-use clap::{load_yaml, App};
-use sp_core::crypto::Pair;
-use sp_keyring::AccountKeyring;
+#[cfg(feature = "std")]
+#[cfg(feature = "full_crypto")]
+use sp_core::{crypto::Pair, sr25519};
+
 use sugarfunge_runtime::{BalancesCall, Call, Header};
 
 use substrate_api_client::{compose_extrinsic, Api, UncheckedExtrinsicV4, XtStatus};
 
-fn main() {
-    env_logger::init();
-    // let url: String = "wss://node.virse.io".into();
-    let url: String = "ws://127.0.0.1:9944".into();
+use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result};
 
-    // initialize api and set the signer (sender) that is used to sign the extrinsics
-    let from = AccountKeyring::Alice.pair();
-    let api = Api::new(url).map(|api| api.set_signer(from)).unwrap();
+use rand::prelude::*;
+use serde::{Deserialize, Serialize};
 
-    // set the recipient
-    let to = AccountKeyring::Eve.to_account_id();
+#[derive(Serialize, Deserialize)]
+struct AccessToken {
+    #[serde(rename = "accessToken")]
+    access_token: String,
+}
 
-    // call Balances::transfer
-    // the names are given as strings
-    #[allow(clippy::redundant_clone)]
-    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic!(
-        api.clone(),
-        "Balances",
-        "transfer",
-        GenericAddress::Id(to),
-        Compact(4369000000000000000000 as u128)
-    );
+#[derive(Serialize, Deserialize)]
+struct CreateAccountResponse {
+    seed: String,
+    public: String,
+}
 
-    println!("[+] Composed Extrinsic:\n {:?}\n", xt);
+async fn create_account(_req: HttpRequest) -> Result<HttpResponse> {
+    let seed = rand::thread_rng().gen::<[u8; 32]>();
+    let pair = sp_core::sr25519::Pair::from_seed(&seed);
+    Ok(HttpResponse::Ok().json(CreateAccountResponse {
+        seed: hex::encode(seed),
+        public: pair.public().to_string(),
+    }))
+}
 
-    // send and watch extrinsic until InBlock
-    let tx_hash = api
-        .send_extrinsic(xt.hex_encode(), XtStatus::InBlock)
-        .unwrap();
-    println!("[+] Transaction got included. Hash: {:?}", tx_hash);
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            .route("/account", web::post().to(create_account))
+    })
+    .bind(("127.0.0.1", 3000))?
+    .run()
+    .await
 }
