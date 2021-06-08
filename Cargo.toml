@@ -38,14 +38,3 @@ git = "https://github.com/SugarFunge/sugarfunge-node.git"
 rev = "197c32591e7f11f1d92b04412a36ef359c6eb786"
 version = "0.1.0"
 package = "sugarfunge-runtime"
-
-[features]
-default = ["std", "full_crypto"]
-std = [
-	"sp-core/std",
-	"sp-runtime/std",
-	"sugarfunge-runtime/std",
-]
-full_crypto = [
-	"sp-core/std",
-]
