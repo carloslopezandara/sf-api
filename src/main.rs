@@ -101,6 +101,8 @@ async fn account_balance(req: web::Json<AccountBalanceInput>) -> Result<HttpResp
         amount = account_data.free;
     }
 
+    println!("AccountId: {}  Balance: {}", who, amount);
+
     Ok(HttpResponse::Ok().json(AccountBalanceOutput { amount }))
 }
 
