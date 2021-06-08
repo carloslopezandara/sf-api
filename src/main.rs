@@ -138,6 +138,5 @@ async fn main() -> std::io::Result<()> {
 
 pub fn get_node_url_from_opt() -> String {
     let opt = Opt::from_args();
-    println!("{:#?}", opt);
     opt.node_server.into()
 }
