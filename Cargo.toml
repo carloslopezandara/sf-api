@@ -27,6 +27,11 @@ git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.2"
 package = "sp-core"
 
+[dependencies.sp-runtime]
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.2"
+package = "sp-runtime"
+
 [dependencies.sugarfunge-runtime]
 git = "https://github.com/SugarFunge/sugarfunge-node.git"
 rev = "197c32591e7f11f1d92b04412a36ef359c6eb786"
@@ -37,6 +42,7 @@ package = "sugarfunge-runtime"
 default = ["std", "full_crypto"]
 std = [
 	"sp-core/std",
+	"sp-runtime/std",
 ]
 full_crypto = [
 	"sp-core/std",
