@@ -3866,6 +3866,7 @@ dependencies = [
  "structopt",
  "substrate-api-client",
  "sugarfunge-runtime",
+ "url 2.2.2",
 ]
 
 [[package]]
@@ -5466,6 +5467,7 @@ dependencies = [
  "idna 0.2.3",
  "matches",
  "percent-encoding 2.1.0",
+ "serde",
 ]
 
 [[package]]

@@ -4,8 +4,23 @@ use serde::{Deserialize, Serialize};
 use sp_core::{crypto::Pair, sr25519};
 use sp_keyring::AccountKeyring;
 use sp_runtime::MultiAddress;
+use structopt::StructOpt;
 use substrate_api_client::{compose_extrinsic_offline, Api, UncheckedExtrinsicV4, XtStatus};
 use sugarfunge_runtime::{BalancesCall, Call, Header};
+use url::Url;
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "sf-api")]
+struct Opt {
+    #[structopt(
+        short = "s",
+        long = "node-server",
+        default_value = "ws://127.0.0.1:9944"
+    )]
+    node_server: Url,
+    #[structopt(short = "l", long = "listen", default_value = "http://127.0.0.1:4000")]
+    listen: Url,
+}
 
 mod account;
 #[derive(Serialize, Deserialize)]
@@ -51,7 +66,7 @@ async fn create_pair(_req: HttpRequest) -> Result<HttpResponse> {
 }
 
 async fn fund_account(req: web::Json<FundAccountInput>) -> Result<HttpResponse> {
-    let node: String = "ws://127.0.0.1:9944".into();
+    let node: String = get_node_url_from_opt();
     let from = AccountKeyring::Alice.pair();
     let api = Api::new(node).map(|api| api.set_signer(from)).unwrap();
 
@@ -91,7 +106,7 @@ async fn fund_account(req: web::Json<FundAccountInput>) -> Result<HttpResponse> 
 }
 
 async fn account_balance(req: web::Json<AccountBalanceInput>) -> Result<HttpResponse> {
-    let node: String = "ws://127.0.0.1:9944".into();
+    let node: String = get_node_url_from_opt();
     let from = account::get_pair_from_seed::<sr25519::Pair>(&req.seed);
     let who = account::get_account_id_from_seed::<sr25519::Public>(&req.seed);
 
@@ -108,18 +123,21 @@ async fn account_balance(req: web::Json<AccountBalanceInput>) -> Result<HttpResp
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let opt = Opt::from_args();
+
     HttpServer::new(|| {
         App::new()
             .route("/pair", web::post().to(create_pair))
             .route("/fund", web::post().to(fund_account))
             .route("/balance", web::get().to(account_balance))
     })
-    .bind(("127.0.0.1", 4000))?
+    .bind((opt.listen.host_str().unwrap(), opt.listen.port().unwrap()))?
     .run()
     .await
 }
 
-// {
-//     "seed": "927e5d37f5a45951cc7576d274e337e72d09baedb674f83ee2d44cc67be32dba",
-//     "account": "5GGpVCWoEzMjXh3tPEg3PAAjWyWJg7weQCh3YPxLdVRyG6RG"
-// }
+pub fn get_node_url_from_opt() -> String {
+    let opt = Opt::from_args();
+    println!("{:#?}", opt);
+    opt.node_server.into()
+}
