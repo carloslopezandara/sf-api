@@ -43,6 +43,7 @@ default = ["std", "full_crypto"]
 std = [
 	"sp-core/std",
 	"sp-runtime/std",
+	"sugarfunge-runtime/std",
 ]
 full_crypto = [
 	"sp-core/std",
