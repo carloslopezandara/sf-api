@@ -111,10 +111,13 @@ async fn fund_account(req: web::Json<FundAccountInput>) -> Result<HttpResponse> 
     );
     println!("[+] Composed Extrinsic:\n {:?}\n", xt);
 
-    // Send and watch extrinsic until in block
-    let blockh = api
-        .send_extrinsic(xt.hex_encode(), XtStatus::InBlock)
-        .unwrap();
+    let blockh = web::block::<_, _, ()>(move || {
+        Ok(api
+            .send_extrinsic(xt.hex_encode(), XtStatus::InBlock)
+            .unwrap())
+    })
+    .await
+    .unwrap();
     println!("[+] Transaction got included in block {:?}", blockh);
 
     Ok(HttpResponse::Ok().json(FundAccountOutput { amount }))
@@ -124,12 +127,17 @@ async fn account_balance(req: web::Json<AccountBalanceInput>) -> Result<HttpResp
     let node: String = get_node_url_from_opt();
     let from = account::get_pair_from_seed::<sr25519::Pair>(&req.seed);
     let who = account::get_account_id_from_seed::<sr25519::Public>(&req.seed);
-
     let api = Api::new(node).map(|api| api.set_signer(from)).unwrap();
-    let mut amount = 0;
-    if let Ok(Some(account_data)) = api.get_account_data(&who) {
-        amount = account_data.free;
-    }
+
+    let (amount, who) = web::block::<_, _, ()>(move || {
+        let mut amount: u128 = 0;
+        if let Ok(Some(account_data)) = api.get_account_data(&who) {
+            amount = account_data.free;
+        }
+        Ok((amount, who))
+    })
+    .await
+    .unwrap_or_default();
 
     println!("AccountId: {}  Balance: {}", who, amount);
 
@@ -165,9 +173,14 @@ async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<Http
     println!("[+] Composed Extrinsic:\n {:?}\n", xt);
 
     // Send and watch extrinsic until in block
-    let blockh = api
-        .send_extrinsic(xt.hex_encode(), XtStatus::InBlock)
-        .unwrap();
+    let blockh = web::block::<_, _, ()>(move || {
+        Ok(api
+            .send_extrinsic(xt.hex_encode(), XtStatus::InBlock)
+            .unwrap())
+    })
+    .await
+    .unwrap();
+
     println!("[+] Transaction got included in block {:?}", blockh);
 
     let event_str = events_out.recv().unwrap();
