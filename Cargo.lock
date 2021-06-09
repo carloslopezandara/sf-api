@@ -3856,7 +3856,9 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "env_logger 0.8.3",
+ "frame-system",
  "hex",
+ "parity-scale-codec 2.1.1",
  "rand 0.8.3",
  "serde",
  "serde_json",
@@ -4822,7 +4824,7 @@ checksum = "1e81da0851ada1f3e9d4312c704aa4f8806f0f9d69faaf8df2f3464b4a9437c2"
 [[package]]
 name = "sugarfunge-currency-token"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=197c32591e7f11f1d92b04412a36ef359c6eb786#197c32591e7f11f1d92b04412a36ef359c6eb786"
+source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=7a6d5e70c51aba5663baee2a688040cfe8d338db#7a6d5e70c51aba5663baee2a688040cfe8d338db"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4840,7 +4842,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-dex"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=197c32591e7f11f1d92b04412a36ef359c6eb786#197c32591e7f11f1d92b04412a36ef359c6eb786"
+source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=7a6d5e70c51aba5663baee2a688040cfe8d338db#7a6d5e70c51aba5663baee2a688040cfe8d338db"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4859,7 +4861,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-extensions-ce"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=197c32591e7f11f1d92b04412a36ef359c6eb786#197c32591e7f11f1d92b04412a36ef359c6eb786"
+source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=7a6d5e70c51aba5663baee2a688040cfe8d338db#7a6d5e70c51aba5663baee2a688040cfe8d338db"
 dependencies = [
  "frame-support",
  "hex",
@@ -4875,7 +4877,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-nft"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=197c32591e7f11f1d92b04412a36ef359c6eb786#197c32591e7f11f1d92b04412a36ef359c6eb786"
+source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=7a6d5e70c51aba5663baee2a688040cfe8d338db#7a6d5e70c51aba5663baee2a688040cfe8d338db"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -4890,7 +4892,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-primitives"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=197c32591e7f11f1d92b04412a36ef359c6eb786#197c32591e7f11f1d92b04412a36ef359c6eb786"
+source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=7a6d5e70c51aba5663baee2a688040cfe8d338db#7a6d5e70c51aba5663baee2a688040cfe8d338db"
 dependencies = [
  "frame-system",
  "parity-scale-codec 2.1.1",
@@ -4904,7 +4906,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-runtime"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=197c32591e7f11f1d92b04412a36ef359c6eb786#197c32591e7f11f1d92b04412a36ef359c6eb786"
+source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=7a6d5e70c51aba5663baee2a688040cfe8d338db#7a6d5e70c51aba5663baee2a688040cfe8d338db"
 dependencies = [
  "frame-executive",
  "frame-support",
@@ -4950,7 +4952,7 @@ dependencies = [
 [[package]]
 name = "sugarfunge-tokens"
 version = "0.1.0"
-source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=197c32591e7f11f1d92b04412a36ef359c6eb786#197c32591e7f11f1d92b04412a36ef359c6eb786"
+source = "git+https://github.com/SugarFunge/sugarfunge-node.git?rev=7a6d5e70c51aba5663baee2a688040cfe8d338db#7a6d5e70c51aba5663baee2a688040cfe8d338db"
 dependencies = [
  "frame-support",
  "frame-system",

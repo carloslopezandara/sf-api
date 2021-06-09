@@ -1,12 +1,17 @@
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Result};
+use codec::Decode;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
+use sp_core::H256 as Hash;
 use sp_core::{crypto::Pair, sr25519};
 use sp_keyring::AccountKeyring;
 use sp_runtime::MultiAddress;
+use std::sync::mpsc::channel;
 use structopt::StructOpt;
-use substrate_api_client::{compose_extrinsic_offline, Api, UncheckedExtrinsicV4, XtStatus};
-use sugarfunge_runtime::{BalancesCall, Call, Header};
+use substrate_api_client::{
+    compose_extrinsic_offline, utils::FromHexString, Api, UncheckedExtrinsicV4, XtStatus,
+};
+use sugarfunge_runtime::{BalancesCall, Call, Event, Header, NFTCall};
 use url::Url;
 
 #[derive(StructOpt, Debug)]
@@ -55,6 +60,17 @@ struct AccountBalanceOutput {
     amount: u128,
 }
 
+#[derive(Serialize, Deserialize)]
+struct CreateCollectionInput {
+    seed: String,
+    name: String,
+}
+
+#[derive(Serialize, Deserialize)]
+struct CreateCollectionOutput {
+    collection_id: u64,
+}
+
 async fn create_pair(_req: HttpRequest) -> Result<HttpResponse> {
     let seed = rand::thread_rng().gen::<[u8; 32]>();
     let seed = hex::encode(seed);
@@ -93,7 +109,6 @@ async fn fund_account(req: web::Json<FundAccountInput>) -> Result<HttpResponse> 
         api.runtime_version.spec_version,
         api.runtime_version.transaction_version
     );
-
     println!("[+] Composed Extrinsic:\n {:?}\n", xt);
 
     // Send and watch extrinsic until in block
@@ -121,6 +136,49 @@ async fn account_balance(req: web::Json<AccountBalanceInput>) -> Result<HttpResp
     Ok(HttpResponse::Ok().json(AccountBalanceOutput { amount }))
 }
 
+async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<HttpResponse> {
+    let node: String = get_node_url_from_opt();
+    let owner = account::get_pair_from_seed::<sr25519::Pair>(&req.seed);
+    let api = Api::new(node)
+        .map(|api| api.set_signer(owner.clone()))
+        .unwrap();
+    let (events_in, events_out) = channel();
+    api.subscribe_events(events_in).unwrap();
+
+    // Information for Era for mortal transactions
+    let head = api.get_finalized_head().unwrap().unwrap();
+    let h: Header = api.get_header(Some(head)).unwrap().unwrap();
+    let period = 5;
+
+    println!("Owner: {} creacte collection: {}", owner.public(), req.name);
+
+    let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
+        api.clone().signer.unwrap(),
+        Call::NFT(NFTCall::create_collection(Vec::new())),
+        api.get_nonce().unwrap(),
+        Era::mortal(period, h.number.into()),
+        api.genesis_hash,
+        head,
+        api.runtime_version.spec_version,
+        api.runtime_version.transaction_version
+    );
+    println!("[+] Composed Extrinsic:\n {:?}\n", xt);
+
+    // Send and watch extrinsic until in block
+    let blockh = api
+        .send_extrinsic(xt.hex_encode(), XtStatus::InBlock)
+        .unwrap();
+    println!("[+] Transaction got included in block {:?}", blockh);
+
+    let event_str = events_out.recv().unwrap();
+    let _unhex = Vec::from_hex(event_str).unwrap();
+    let mut _er_enc = _unhex.as_slice();
+    let _events = Vec::<system::EventRecord<Event, Hash>>::decode(&mut _er_enc);
+    println!("[+] Events {:?}", _events);
+
+    Ok(HttpResponse::Ok().json(CreateCollectionOutput { collection_id: 0 }))
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let opt = Opt::from_args();
@@ -130,6 +188,7 @@ async fn main() -> std::io::Result<()> {
             .route("/pair", web::post().to(create_pair))
             .route("/fund", web::post().to(fund_account))
             .route("/balance", web::get().to(account_balance))
+            .route("/collection", web::post().to(create_collection))
     })
     .bind((opt.listen.host_str().unwrap(), opt.listen.port().unwrap()))?
     .run()

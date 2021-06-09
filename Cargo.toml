@@ -13,28 +13,34 @@ serde_json = "1.0"
 rand = "0.8.3"
 hex = "0.4.3"
 url = { version = "2", features = ["serde"] }
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false, features = ["derive"] }
 
 [dependencies.substrate-api-client]
 git = "https://github.com/SugarFunge/substrate-api-client.git"
 rev = "91cb055d8946c7bbabb39e63ec3a9dcb179a25c8"
 
 [dependencies.sp-keyring]
-git = "https://github.com/paritytech/substrate"
+git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.2"
 package = "sp-keyring"
 
 [dependencies.sp-core]
-git = "https://github.com/paritytech/substrate"
+git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.2"
 package = "sp-core"
 
 [dependencies.sp-runtime]
-git = "https://github.com/paritytech/substrate"
+git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.2"
 package = "sp-runtime"
 
+[dependencies.system]
+git = "https://github.com/paritytech/substrate.git"
+branch = "polkadot-v0.9.2"
+package = "frame-system"
+
 [dependencies.sugarfunge-runtime]
 git = "https://github.com/SugarFunge/sugarfunge-node.git"
-rev = "197c32591e7f11f1d92b04412a36ef359c6eb786"
+rev = "7a6d5e70c51aba5663baee2a688040cfe8d338db"
 version = "0.1.0"
 package = "sugarfunge-runtime"
