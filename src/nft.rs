@@ -52,16 +52,16 @@ pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<
     );
     println!("[+] Composed Extrinsic:\n {:?}\n", xt);
 
+    let start_time = std::time::Instant::now();
+
     // Send and watch extrinsic until in block
     let collection_id: Option<u64> = web::block::<_, _, ()>(move || {
         let blockh = api
             .send_extrinsic(xt.hex_encode(), XtStatus::InBlock)
             .unwrap();
+        println!("[+] Transaction got included in block {:?}", blockh);
 
-        let mut wait_for_event = true;
-        let mut collection_id = None;
-
-        while wait_for_event {
+        while start_time.elapsed().as_secs() < 20 {
             let event_str = events_out.recv().unwrap();
             let unhex = Vec::from_hex(event_str).unwrap();
             let mut er_enc = unhex.as_slice();
@@ -75,9 +75,7 @@ pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<
                                 account_id,
                             ) if *account_id == owner_account_id => {
                                 println!("[+] Event: {:?}", nft_event);
-                                collection_id = Some(*new_collection_id);
-                                wait_for_event = false;
-                                break;
+                                return Ok(Some(*new_collection_id));
                             }
                             _ => (),
                         },
@@ -85,12 +83,9 @@ pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<
                     }
                 }
             }
-            // TODO: break on some threshold
         }
 
-        println!("[+] Transaction got included in block {:?}", blockh);
-
-        Ok(collection_id)
+        Ok(None)
 
         // Some(collection_id)
     })
