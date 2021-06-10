@@ -1,16 +1,13 @@
 use crate::account::*;
 use crate::command::*;
+use crate::event::wait_for_event;
 use actix_web::{web, HttpResponse, Result};
-use codec::Decode;
 use serde::{Deserialize, Serialize};
-use sp_core::H256 as Hash;
 use sp_core::{crypto::Pair, sr25519};
-use std::sync::mpsc::channel;
 use substrate_api_client::{
-    compose_extrinsic_offline, utils::FromHexString, Api, UncheckedExtrinsicV4, XtStatus,
+    compose_extrinsic_offline, Api, UncheckedExtrinsicV4, XtStatus,
 };
 use sugarfunge_runtime::{Call, Event, Header, NFTCall};
-use system::EventRecord;
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateCollectionInput {
@@ -30,8 +27,6 @@ pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<
     let api = Api::new(node)
         .map(|api| api.set_signer(owner.clone()))
         .unwrap();
-    let (events_in, events_out) = channel();
-    api.subscribe_events(events_in).unwrap();
 
     // Information for Era for mortal transactions
     let head = api.get_finalized_head().unwrap().unwrap();
@@ -52,8 +47,6 @@ pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<
     );
     println!("[+] Composed Extrinsic:\n {:?}\n", xt);
 
-    let start_time = std::time::Instant::now();
-
     // Send and watch extrinsic until in block
     let collection_id: Option<u64> = web::block::<_, _, ()>(move || {
         let blockh = api
@@ -61,33 +54,18 @@ pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<
             .unwrap();
         println!("[+] Transaction got included in block {:?}", blockh);
 
-        while start_time.elapsed().as_secs() < 20 {
-            let event_str = events_out.recv().unwrap();
-            let unhex = Vec::from_hex(event_str).unwrap();
-            let mut er_enc = unhex.as_slice();
-            let event_records = Vec::<EventRecord<Event, Hash>>::decode(&mut er_enc);
-            if let Ok(event_records) = event_records {
-                for event_record in &event_records {
-                    match &event_record.event {
-                        Event::sugarfunge_nft(nft_event) => match &nft_event {
-                            sugarfunge_nft::Event::CollectionCreated(
-                                new_collection_id,
-                                account_id,
-                            ) if *account_id == owner_account_id => {
-                                println!("[+] Event: {:?}", nft_event);
-                                return Ok(Some(*new_collection_id));
-                            }
-                            _ => (),
-                        },
-                        _ => (),
-                    }
+        Ok(wait_for_event(api, |event| match event {
+            Event::sugarfunge_nft(nft_event) => match &nft_event {
+                sugarfunge_nft::Event::CollectionCreated(new_collection_id, account_id)
+                    if *account_id == owner_account_id =>
+                {
+                    println!("[+] Event: {:?}", nft_event);
+                    return Some(*new_collection_id);
                 }
-            }
-        }
-
-        Ok(None)
-
-        // Some(collection_id)
+                _ => None,
+            },
+            _ => None,
+        }))
     })
     .await
     .unwrap();

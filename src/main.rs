@@ -7,6 +7,7 @@ use structopt::StructOpt;
 
 mod account;
 mod command;
+mod event;
 mod nft;
 
 #[derive(Serialize, Deserialize)]
