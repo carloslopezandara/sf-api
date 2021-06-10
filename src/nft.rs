@@ -1,3 +1,5 @@
+use crate::account::*;
+use crate::command::*;
 use actix_web::{web, HttpResponse, Result};
 use codec::Decode;
 use serde::{Deserialize, Serialize};
@@ -8,8 +10,7 @@ use substrate_api_client::{
     compose_extrinsic_offline, utils::FromHexString, Api, UncheckedExtrinsicV4, XtStatus,
 };
 use sugarfunge_runtime::{Call, Event, Header, NFTCall};
-use crate::account::*;
-use crate::command::*;
+use system::EventRecord;
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateCollectionInput {
@@ -25,6 +26,7 @@ pub struct CreateCollectionOutput {
 pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<HttpResponse> {
     let node: String = get_node_url_from_opt();
     let owner = get_pair_from_seed::<sr25519::Pair>(&req.seed);
+    let owner_account_id = get_account_id_from_seed::<sr25519::Public>(&req.seed);
     let api = Api::new(node)
         .map(|api| api.set_signer(owner.clone()))
         .unwrap();
@@ -36,11 +38,11 @@ pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<
     let h: Header = api.get_header(Some(head)).unwrap().unwrap();
     let period = 5;
 
-    println!("Owner: {} creacte collection: {}", owner.public(), req.name);
+    println!("Owner: {} create collection: {}", owner.public(), req.name);
 
     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
         api.clone().signer.unwrap(),
-        Call::NFT(NFTCall::create_collection(Vec::new())),
+        Call::NFT(NFTCall::create_collection(req.name.as_bytes().into())),
         api.get_nonce().unwrap(),
         Era::mortal(period, h.number.into()),
         api.genesis_hash,
@@ -61,11 +63,36 @@ pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<
 
     println!("[+] Transaction got included in block {:?}", blockh);
 
-    let event_str = events_out.recv().unwrap();
-    let _unhex = Vec::from_hex(event_str).unwrap();
-    let mut _er_enc = _unhex.as_slice();
-    let _events = Vec::<system::EventRecord<Event, Hash>>::decode(&mut _er_enc);
-    println!("[+] Events {:?}", _events);
+    let mut collection_id = 0;
+    let mut wait_for_event = true;
 
-    Ok(HttpResponse::Ok().json(CreateCollectionOutput { collection_id: 0 }))
+    while wait_for_event {
+        let event_str = events_out.recv().unwrap();
+        let _unhex = Vec::from_hex(event_str).unwrap();
+        let mut _er_enc = _unhex.as_slice();
+        let event_records = Vec::<EventRecord<Event, Hash>>::decode(&mut _er_enc);
+        if let Ok(event_records) = event_records {
+            for event_record in &event_records {
+                match &event_record.event {
+                    Event::sugarfunge_nft(nft_event) => match &nft_event {
+                        sugarfunge_nft::Event::CollectionCreated(new_collection_id, account_id)
+                            if *account_id == owner_account_id =>
+                        {
+                            println!("[+] Event: {:?}", nft_event);
+                            collection_id = *new_collection_id;
+                            wait_for_event = false;
+                            break;
+                        }
+                        _ => (),
+                    },
+                    _ => (),
+                }
+            }
+        }
+        // TODO: break on some threshold
+    }
+
+    Ok(HttpResponse::Ok().json(CreateCollectionOutput {
+        collection_id: collection_id,
+    }))
 }

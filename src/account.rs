@@ -71,7 +71,7 @@ pub async fn fund_account(req: web::Json<FundAccountInput>) -> Result<HttpRespon
 
     println!("AccountId To: {}", to);
 
-    let amount = 123456789;
+    let amount = 10000000000000000000;
 
     let to = MultiAddress::Id(to);
 

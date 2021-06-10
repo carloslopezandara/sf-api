@@ -41,6 +41,12 @@ package = "frame-system"
 
 [dependencies.sugarfunge-runtime]
 git = "https://github.com/SugarFunge/sugarfunge-node.git"
-rev = "7a6d5e70c51aba5663baee2a688040cfe8d338db"
+rev = "776e991c47113133fa8c4242945afe137b289fc9"
 version = "0.1.0"
 package = "sugarfunge-runtime"
+
+[dependencies.sugarfunge-nft]
+git = "https://github.com/SugarFunge/sugarfunge-node.git"
+rev = "776e991c47113133fa8c4242945afe137b289fc9"
+version = "0.1.0"
+package = "sugarfunge-nft"
