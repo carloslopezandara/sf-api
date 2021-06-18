@@ -1,5 +1,5 @@
 use crate::command::*;
-use actix_web::{web, HttpRequest, HttpResponse, Result};
+use actix_web::*;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
@@ -8,6 +8,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 use sp_runtime::MultiAddress;
 use substrate_api_client::{compose_extrinsic_offline, Api, UncheckedExtrinsicV4, XtStatus};
 use sugarfunge_runtime::{AccountId, BalancesCall, Call, Header, Signature};
+use std::str;
 
 /// Generate a crypto public from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -49,6 +50,11 @@ pub async fn create_pair(_req: HttpRequest) -> Result<HttpResponse> {
 
 #[derive(Serialize, Deserialize)]
 pub struct FundAccountInput {
+    input: FundAccountArg,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FundAccountArg {
     seed: String,
 }
 
@@ -58,6 +64,7 @@ pub struct FundAccountOutput {
 }
 
 pub async fn fund_account(req: web::Json<FundAccountInput>) -> Result<HttpResponse> {
+
     let node: String = get_node_url_from_opt();
     let from = AccountKeyring::Alice.pair();
     let api = Api::new(node).map(|api| api.set_signer(from)).unwrap();
@@ -67,7 +74,7 @@ pub async fn fund_account(req: web::Json<FundAccountInput>) -> Result<HttpRespon
     let h: Header = api.get_header(Some(head)).unwrap().unwrap();
     let period = 5;
 
-    let to = get_account_id_from_seed::<sr25519::Public>(&req.seed);
+    let to = get_account_id_from_seed::<sr25519::Public>(&req.input.seed);
 
     println!("AccountId To: {}", to);
 
@@ -101,6 +108,11 @@ pub async fn fund_account(req: web::Json<FundAccountInput>) -> Result<HttpRespon
 
 #[derive(Serialize, Deserialize)]
 pub struct AccountBalanceInput {
+    input: AccountBalanceArg,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct AccountBalanceArg {
     seed: String,
 }
 
@@ -111,8 +123,8 @@ pub struct AccountBalanceOutput {
 
 pub async fn account_balance(req: web::Json<AccountBalanceInput>) -> Result<HttpResponse> {
     let node: String = get_node_url_from_opt();
-    let from = get_pair_from_seed::<sr25519::Pair>(&req.seed);
-    let who = get_account_id_from_seed::<sr25519::Public>(&req.seed);
+    let from = get_pair_from_seed::<sr25519::Pair>(&req.input.seed);
+    let who = get_account_id_from_seed::<sr25519::Public>(&req.input.seed);
     let api = Api::new(node).map(|api| api.set_signer(from)).unwrap();
 
     let (amount, who) = web::block::<_, _, ()>(move || {
@@ -128,4 +140,20 @@ pub async fn account_balance(req: web::Json<AccountBalanceInput>) -> Result<Http
     println!("AccountId: {}  Balance: {}", who, amount);
 
     Ok(HttpResponse::Ok().json(AccountBalanceOutput { amount }))
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct TestInput {
+    input: TestSeed,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct TestSeed{
+    seed: String,
+}
+
+pub async fn test(req: web::Json<TestInput>) -> Result<HttpResponse> {
+    println!("Req Input: {}  ", &req.input.seed);
+
+    Ok(HttpResponse::Ok().finish())
 }

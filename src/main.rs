@@ -24,8 +24,9 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .route("/pair", web::post().to(create_pair))
             .route("/fund", web::post().to(fund_account))
-            .route("/balance", web::get().to(account_balance))
+            .route("/balance", web::post().to(account_balance))
             .route("/collection", web::post().to(create_collection))
+            .route("/test", web::post().to(test))
     })
     .bind((opt.listen.host_str().unwrap(), opt.listen.port().unwrap()))?
     .run()

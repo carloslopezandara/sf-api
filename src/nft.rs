@@ -11,6 +11,11 @@ use sugarfunge_runtime::{Call, Event, Header, NFTCall};
 
 #[derive(Serialize, Deserialize)]
 pub struct CreateCollectionInput {
+    input: CreateCollectionArg,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CreateCollectionArg {
     seed: String,
     name: String,
 }
@@ -22,8 +27,8 @@ pub struct CreateCollectionOutput {
 
 pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<HttpResponse> {
     let node: String = get_node_url_from_opt();
-    let owner = get_pair_from_seed::<sr25519::Pair>(&req.seed);
-    let owner_account_id = get_account_id_from_seed::<sr25519::Public>(&req.seed);
+    let owner = get_pair_from_seed::<sr25519::Pair>(&req.input.seed);
+    let owner_account_id = get_account_id_from_seed::<sr25519::Public>(&req.input.seed);
     let api = Api::new(node)
         .map(|api| api.set_signer(owner.clone()))
         .unwrap();
@@ -33,11 +38,11 @@ pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<
     let h: Header = api.get_header(Some(head)).unwrap().unwrap();
     let period = 5;
 
-    println!("Owner: {} create collection: {}", owner.public(), req.name);
+    println!("Owner: {} create collection: {}", owner.public(), req.input.name);
 
     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
         api.clone().signer.unwrap(),
-        Call::NFT(NFTCall::create_collection(req.name.as_bytes().into())),
+        Call::NFT(NFTCall::create_collection(req.input.name.as_bytes().into())),
         api.get_nonce().unwrap(),
         Era::mortal(period, h.number.into()),
         api.genesis_hash,
