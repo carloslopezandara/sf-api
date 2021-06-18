@@ -141,19 +141,3 @@ pub async fn account_balance(req: web::Json<AccountBalanceInput>) -> Result<Http
 
     Ok(HttpResponse::Ok().json(AccountBalanceOutput { amount }))
 }
-
-#[derive(Serialize, Deserialize)]
-pub struct TestInput {
-    input: TestSeed,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct TestSeed{
-    seed: String,
-}
-
-pub async fn test(req: web::Json<TestInput>) -> Result<HttpResponse> {
-    println!("Req Input: {}  ", &req.input.seed);
-
-    Ok(HttpResponse::Ok().finish())
-}
