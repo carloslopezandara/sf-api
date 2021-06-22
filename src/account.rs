@@ -32,12 +32,15 @@ where
     AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
+//This section allows to deconstruct the input received by the endpoint "/pair" and construct its output
+
 #[derive(Serialize, Deserialize)]
 pub struct CreatePairResponse {
     seed: String,
     account: String,
 }
 
+//Creates a unique seed and its associated account and send them back as a response
 pub async fn create_pair(_req: HttpRequest) -> Result<HttpResponse> {
     let seed = rand::thread_rng().gen::<[u8; 32]>();
     let seed = hex::encode(seed);
@@ -47,6 +50,8 @@ pub async fn create_pair(_req: HttpRequest) -> Result<HttpResponse> {
         account: format!("{}", account),
     }))
 }
+
+//This section allows to deconstruct the input received by the endpoint "/fund" and construct its output
 
 #[derive(Serialize, Deserialize)]
 pub struct FundAccountInput {
@@ -63,6 +68,7 @@ pub struct FundAccountOutput {
     amount: u128,
 }
 
+//Funds a given account with the default amount and returns it as a responde
 pub async fn fund_account(req: web::Json<FundAccountInput>) -> Result<HttpResponse> {
 
     let node: String = get_node_url_from_opt();
@@ -106,6 +112,8 @@ pub async fn fund_account(req: web::Json<FundAccountInput>) -> Result<HttpRespon
     Ok(HttpResponse::Ok().json(FundAccountOutput { amount }))
 }
 
+//This section allows to deconstruct the input received by the endpoint "/balance" and construct its output
+
 #[derive(Serialize, Deserialize)]
 pub struct AccountBalanceInput {
     input: AccountBalanceArg,
@@ -121,6 +129,7 @@ pub struct AccountBalanceOutput {
     amount: u128,
 }
 
+//Returns as a response the current amount of credit in the given seed
 pub async fn account_balance(req: web::Json<AccountBalanceInput>) -> Result<HttpResponse> {
     let node: String = get_node_url_from_opt();
     let from = get_pair_from_seed::<sr25519::Pair>(&req.input.seed);

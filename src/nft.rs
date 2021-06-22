@@ -3,10 +3,12 @@ use crate::command::*;
 use crate::event::wait_for_event;
 use actix_web::{web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
+use serde_json::{Value};
 use sp_core::{crypto::Pair, sr25519};
 use substrate_api_client::{compose_extrinsic_offline, Api, UncheckedExtrinsicV4, XtStatus};
 use sugarfunge_runtime::{Call, Event, Header, NFTCall};
 
+//This section allows to deconstruct the input received by the endpoint "/collection" and construct its output
 #[derive(Serialize, Deserialize)]
 pub struct CreateCollectionInput {
     input: CreateCollectionArg,
@@ -23,6 +25,7 @@ pub struct CreateCollectionOutput {
     collection_id: u64,
 }
 
+//Creates a collection associated with a seed and returns its ID
 pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<HttpResponse> {
     let node: String = get_node_url_from_opt();
     let owner = get_pair_from_seed::<sr25519::Pair>(&req.input.seed);
@@ -82,6 +85,8 @@ pub async fn create_collection(req: web::Json<CreateCollectionInput>) -> Result<
     }))
 }
 
+//This section allows to deconstruct the input received by the endpoint "/mint" and construct its output
+
 #[derive(Serialize, Deserialize)]
 pub struct MintNftInput {
     input: MintNftArg,
@@ -91,7 +96,7 @@ pub struct MintNftInput {
 pub struct MintNftArg {
     seed: String,
     collection_id: u64,
-    metadata: Vec<u8>,
+    metadata: Value, //Value means that metadata expects a json
     quantity: u32,
 }
 
@@ -101,6 +106,7 @@ pub struct MintNftOutput {
     asset_ids: Vec<u64>,
 }
 
+//Mints new NFTs acording to the given quantity in a given collection and returns its IDs
 pub async fn mint(req: web::Json<MintNftInput>) -> Result<HttpResponse> {
     let node: String = get_node_url_from_opt();
     let owner = get_pair_from_seed::<sr25519::Pair>(&req.input.seed);
@@ -120,11 +126,13 @@ pub async fn mint(req: web::Json<MintNftInput>) -> Result<HttpResponse> {
         req.input.collection_id
     );
 
+    let metadata: Vec<u8> = serde_json::to_vec(&req.input.metadata).unwrap();
+
     let xt: UncheckedExtrinsicV4<_> = compose_extrinsic_offline!(
         api.clone().signer.unwrap(),
         Call::NFT(NFTCall::mint(
             req.input.collection_id,
-            req.input.metadata.clone(),
+            metadata.clone(),
             req.input.quantity
         )),
         api.get_nonce().unwrap(),
